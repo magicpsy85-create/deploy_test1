@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔮 나의 전생 이야기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0015 0%, #1a0030 30%, #0d001a 60%, #000010 100%);
+      color: #e8d5f5;
+      font-family: 'Noto Sans KR', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* 별 배경 */
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      animation: twinkle var(--duration) ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .crystal-ball {
+      font-size: 80px;
+      margin-bottom: 10px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    h1 {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #c9a0ff, #ffb6e1, #c9a0ff);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s ease-in-out infinite;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #9a7fbf;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .input-section {
+      width: 100%;
+      text-align: center;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 18px 24px;
+      font-size: 1.1rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid rgba(180, 140, 255, 0.3);
+      border-radius: 16px;
+      color: #f0e6ff;
+      outline: none;
+      transition: all 0.3s;
+    }
+    input[type="text"]::placeholder { color: rgba(200, 170, 255, 0.4); }
+    input[type="text"]:focus {
+      border-color: rgba(180, 140, 255, 0.7);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 30px rgba(150, 100, 255, 0.2);
+    }
+
+    .btn-reveal {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.15rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, #7b2ff2, #c56cf0);
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-reveal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(123, 47, 242, 0.5);
+    }
+    .btn-reveal:active { transform: translateY(0); }
+    .btn-reveal:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 로딩 */
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .loading.active { display: block; }
+    .loading-orb {
+      width: 60px; height: 60px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #c56cf0, #7b2ff2);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    .loading-text {
+      font-size: 1rem;
+      color: #b896e0;
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    /* 결과 카드 */
+    .result-card {
+      display: none;
+      width: 100%;
+      margin-top: 30px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(180, 140, 255, 0.2);
+      border-radius: 24px;
+      padding: 32px 28px;
+      animation: fadeUp 0.8s ease-out;
+      backdrop-filter: blur(10px);
+    }
+    .result-card.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .result-name {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #e0c3ff;
+      margin-bottom: 4px;
+    }
+    .result-name span { color: #ffb6e1; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .info-item {
+      background: rgba(123, 47, 242, 0.15);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .info-label {
+      font-size: 0.75rem;
+      color: #9a7fbf;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .info-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #d4b3ff;
+    }
+
+    .story-section {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      line-height: 1.8;
+      font-size: 1rem;
+      color: #d8c4f0;
+      white-space: pre-wrap;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-retry {
+      background: rgba(255, 255, 255, 0.08);
+      color: #c9a0ff;
+      border: 1px solid rgba(180, 140, 255, 0.3);
+    }
+    .btn-retry:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .btn-share {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      color: white;
+    }
+    .btn-share:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+    }
+
+    /* 공유 모달 */
+    .share-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .share-modal.active {
+      display: flex;
+    }
+    .share-content {
+      background: #1a0030;
+      border: 1px solid rgba(180, 140, 255, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .share-content h3 {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 1.3rem;
+      color: #e0c3ff;
+      margin-bottom: 20px;
+    }
+    .share-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .share-btn {
+      padding: 14px;
+      font-size: 1rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+    }
+    .share-btn:hover { transform: translateY(-2px); }
+    .share-kakao { background: #FEE500; color: #3C1E1E; }
+    .share-twitter { background: #1DA1F2; }
+    .share-copy { background: rgba(255,255,255,0.1); color: #c9a0ff; border: 1px solid rgba(180,140,255,0.3); }
+    .share-close {
+      margin-top: 16px;
+      padding: 10px;
+      background: none;
+      border: none;
+      color: #9a7fbf;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(123, 47, 242, 0.9);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+      z-index: 200;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.7rem; }
+      .info-grid { grid-template-columns: 1fr; }
+      .container { padding: 30px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+
+  <div class="container">
+    <div class="crystal-ball">🔮</div>
+    <h1>나의 전생 이야기</h1>
+    <p class="subtitle">당신의 이름을 알려주세요. 전생의 비밀을 풀어드립니다.</p>
+
+    <div class="input-section">
+      <div class="input-group">
+        <input type="text" id="nameInput" placeholder="이름을 입력하세요..." maxlength="20" autocomplete="off">
+      </div>
+      <button class="btn-reveal" id="revealBtn">전생 알아보기 ✨</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="loading-orb"></div>
+      <p class="loading-text">전생의 기억을 불러오는 중...</p>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <p class="result-name"><span id="resultName"></span>님의 전생</p>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">시대</div>
+          <div class="info-value" id="resultYear"></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">직업</div>
+          <div class="info-value" id="resultJob"></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">사인</div>
+          <div class="info-value" id="resultDeath"></div>
+        </div>
+      </div>
+      <div class="story-section" id="resultStory"></div>
+      <div class="action-buttons">
+        <button class="btn-action btn-retry" id="retryBtn">다시 보기 🔄</button>
+        <button class="btn-action btn-share" id="shareBtn">공유하기 💌</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공유 모달 -->
+  <div class="share-modal" id="shareModal">
+    <div class="share-content">
+      <h3>전생 이야기 공유하기</h3>
+      <div class="share-options">
+        <button class="share-btn share-twitter" id="shareTwitter">𝕏 (Twitter)에 공유</button>
+        <button class="share-btn share-copy" id="shareCopy">텍스트 복사하기 📋</button>
+      </div>
+      <button class="share-close" id="shareClose">닫기</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 별 생성
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 3 + 1;
+      star.style.cssText = `
+        width: ${size}px; height: ${size}px;
+        top: ${Math.random() * 100}%; left: ${Math.random() * 100}%;
+        --duration: ${Math.random() * 3 + 2}s;
+        animation-delay: ${Math.random() * 3}s;
+      `;
+      starsEl.appendChild(star);
+    }
+
+    const nameInput = document.getElementById('nameInput');
+    const revealBtn = document.getElementById('revealBtn');
+    const loading = document.getElementById('loading');
+    const resultCard = document.getElementById('resultCard');
+    const shareModal = document.getElementById('shareModal');
+    const toast = document.getElementById('toast');
+
+    let currentResult = null;
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') revealBtn.click();
+    });
+
+    revealBtn.addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.focus();
+        showToast('이름을 입력해주세요!');
+        return;
+      }
+
+      revealBtn.disabled = true;
+      resultCard.classList.remove('active');
+      loading.classList.add('active');
+
+      try {
+        const res = await fetch('/api/past-life', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error);
+
+        currentResult = data;
+        document.getElementById('resultName').textContent = data.name;
+        document.getElementById('resultYear').textContent = data.year;
+        document.getElementById('resultJob').textContent = data.job;
+        document.getElementById('resultDeath').textContent = data.death;
+        document.getElementById('resultStory').textContent = data.story;
+
+        loading.classList.remove('active');
+        resultCard.classList.add('active');
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        loading.classList.remove('active');
+        showToast(err.message || '오류가 발생했습니다.');
+      } finally {
+        revealBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      resultCard.classList.remove('active');
+      revealBtn.click();
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      shareModal.classList.add('active');
+    });
+
+    document.getElementById('shareClose').addEventListener('click', () => {
+      shareModal.classList.remove('active');
+    });
+
+    shareModal.addEventListener('click', (e) => {
+      if (e.target === shareModal) shareModal.classList.remove('active');
+    });
+
+    function getShareText() {
+      if (!currentResult) return '';
+      return `🔮 나의 전생 이야기\n\n이름: ${currentResult.name}\n시대: ${currentResult.year}\n직업: ${currentResult.job}\n사인: ${currentResult.death}\n\n${currentResult.story}\n\n나도 전생 알아보기 👉`;
+    }
+
+    document.getElementById('shareTwitter').addEventListener('click', () => {
+      const text = encodeURIComponent(getShareText().substring(0, 280));
+      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+      shareModal.classList.remove('active');
+    });
+
+    document.getElementById('shareCopy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(getShareText());
+        showToast('클립보드에 복사되었습니다!');
+      } catch {
+        showToast('복사에 실패했습니다.');
+      }
+      shareModal.classList.remove('active');
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+  </script>
+</body>
+</html>
