@@ -17,9 +17,14 @@ app.use(express.static(join(__dirname, 'public')));
 const openai = new OpenAI({ apiKey: process.env.openai_api_key });
 
 let jobs = [];
-readFile(join(__dirname, 'jobs.json'), 'utf-8').then(data => {
-  jobs = JSON.parse(data);
-});
+let beings = [];
+let deaths = [];
+
+Promise.all([
+  readFile(join(__dirname, 'jobs.json'), 'utf-8').then(data => { jobs = JSON.parse(data); }),
+  readFile(join(__dirname, 'beings.json'), 'utf-8').then(data => { beings = JSON.parse(data); }),
+  readFile(join(__dirname, 'deaths.json'), 'utf-8').then(data => { deaths = JSON.parse(data); }),
+]);
 
 function getRandomYear() {
   // -150000 ~ 1980 사이 랜덤
@@ -33,21 +38,20 @@ function formatYear(year) {
   return `${year}년`;
 }
 
-function getRandomJob() {
-  return jobs[Math.floor(Math.random() * jobs.length)];
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-const deathCauses = [
-  "전쟁 중 전사", "전염병", "독살", "낙뢰", "익사", "화산 폭발",
-  "맹수의 습격", "기아", "동사", "처형", "결투 패배", "추락사",
-  "식중독", "자연재해", "암살", "탈진", "뱀에 물림", "폭풍우",
-  "사형 선고", "미지의 질병", "노환", "실험 실패", "화재",
-  "바다에서 실종", "광산 붕괴", "혁명 중 사망", "독버섯 섭취",
-  "사냥 중 사고", "무너진 건물에 깔림", "열사병"
-];
+// 50% 확률로 인간 직업, 50% 확률로 비인간 존재
+function getRandomIdentity() {
+  if (Math.random() < 0.5) {
+    return { type: '직업', value: pick(jobs) };
+  }
+  return { type: '존재', value: pick(beings) };
+}
 
 function getRandomDeath() {
-  return deathCauses[Math.floor(Math.random() * deathCauses.length)];
+  return pick(deaths);
 }
 
 app.post('/api/past-life', async (req, res) => {
@@ -57,9 +61,10 @@ app.post('/api/past-life', async (req, res) => {
   }
 
   const year = getRandomYear();
-  const job = getRandomJob();
+  const identity = getRandomIdentity();
   const death = getRandomDeath();
   const yearStr = formatYear(year);
+  const identityLabel = identity.type === '직업' ? '전생 직업' : '전생 존재';
 
   try {
     const completion = await openai.chat.completions.create({
@@ -67,11 +72,11 @@ app.post('/api/past-life', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `당신은 전생 이야기를 들려주는 신비로운 점술사입니다. 유저의 전생에 대해 흥미진진하고 드라마틱하게 스토리텔링 해주세요. 반드시 한국어로 답변하세요. 이야기는 300자 내외로 작성해주세요. 감성적이면서도 유머가 있게 작성해주세요. 마지막에 교훈이나 현생과의 연결고리를 한 줄 넣어주세요.`
+          content: `당신은 전생 이야기를 들려주는 신비로운 점술사입니다. 유저의 전생에 대해 흥미진진하고 드라마틱하게 스토리텔링 해주세요. 반드시 한국어로 답변하세요. 이야기는 300자 내외로 작성해주세요. 전생이 인간이 아닐 수도 있습니다(동물, 무생물, 미생물, 외계인, 유령 등). 비인간 존재일 경우 그 존재의 관점에서 1인칭으로 생생하게 묘사해주세요. 사인이 웃길 경우 코미디 톤으로 작성해주세요. 마지막에 교훈이나 현생과의 연결고리를 한 줄 넣어주세요.`
         },
         {
           role: 'user',
-          content: `이름: ${name}\n전생 시대: ${yearStr}\n전생 직업: ${job}\n사인: ${death}\n\n위 정보를 바탕으로 이 사람의 전생 이야기를 드라마틱하게 들려주세요.`
+          content: `이름: ${name}\n전생 시대: ${yearStr}\n${identityLabel}: ${identity.value}\n사인: ${death}\n\n위 정보를 바탕으로 이 사람의 전생 이야기를 드라마틱하게 들려주세요.`
         }
       ],
       max_tokens: 1000,
@@ -83,7 +88,7 @@ app.post('/api/past-life', async (req, res) => {
     res.json({
       name,
       year: yearStr,
-      job,
+      job: identity.value,
       death,
       story,
     });
